@@ -9,22 +9,112 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Inicialización
+#### Funciones auxiliares para cargar paquetes y lista de paquetes
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
+prepare_packages <- function(packages){
+  # Chequeamos que paquetes no estan instalados:
+  non_intalled <- packages[!(packages %in% installed.packages()[, "Package"])]
+  # En caso de existir alguno aún no instalado, lo instalamos:
+  if (length(non_intalled)) 
+    install.packages(non_intalled, dependencies = TRUE)
+  # Cargamos toda la lista de paquetes:
+  sapply(packages, require, character.only = TRUE)
+}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
+
+packages <- c("tidyverse",
+              "MASS",
+              "car",
+              "binr",
+              "e1071",
+              "caret",
+              "cowplot",
+              "caTools",
+              "pROC",
+              "ggcorrplot",
+              "data.table",
+              "Information",
+              "rpart",
+              "rpart.plot",
+              "xgboost",
+              "ROCR",
+              "pROC"
+)
+
+prepare_packages(packages)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+#### Cargar el dataset
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+dataset <- read.csv("C:/Users/Alex/Desktop/Master&Bootcamp/Master/Modulo5/Trabajo individual/telco-customer-churn/WA_Fn-UseC_-Telco-Customer-Churn.csv")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Se va a analizar el tipo de información que contiene el dataset
+
+```{r}
+glimpse(dataset)
+```
+
+Se va a cambiar los valores de la variable Senior Citizens valores categoricos de 'Yes', 'No'. Homogeneizando con el resto de variables categoricas.
+
+```{r}
+dataset$SeniorCitizen <- as.factor(ifelse(dataset$SeniorCitizen==1, 'Yes', 'No'))
+```
+
+## AutoML
+Utilizando la libreria de H2O se va a probar como se comporta el dataset en limpio con un modelo y asi poder intuir de que modo proceder con el mismo.
+
+Se va a dividir el dataset en train, validation y test.
+
+```{r}
+set.seed(46)
+selected <- sample(1:nrow(dataset), 0.2*nrow(dataset))
+train <- dataset[-selected,]
+test <- dataset[selected,]
+
+#Model
+# Set names for h2o
+target <- "Churn"
+x <- setdiff(names(train), target)
+```
+
+Se va a lanzar todos los modelos supervisados excepto los referentes a Deep Learning y GLM.
+
+```{r}
+library(h2o)
+h2o.init()
+write.csv(train, file = "train.csv")
+train2 = h2o.importFile("./train.csv")
+write.csv(test, file = "test.csv")
+test2 = h2o.importFile("./test.csv")
+aml <- h2o.automl(x = x,
+                 y = target,
+                 validation_frame = test2,
+                 training_frame = train2,
+                 max_runtime_secs = 60,
+                 exclude_algos = c("DeepLearning", "GLM"))
+```
+
+Extraer los mejores modelos del train.
+```{r}
+automl_leader <- aml@leader
+automl_leader_list <- aml@leaderboard
+automl_leader_list
+
+```
+
+Ver la matriz de confusión
+
+```{r}
+h2o.confusionMatrix(automl_leader)
+```
+
+
+
+
+
