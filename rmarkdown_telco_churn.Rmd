@@ -114,6 +114,11 @@ Ver la matriz de confusión
 h2o.confusionMatrix(automl_leader)
 ```
 
+Variables más determinantes
+
+```{r}
+h2o.varimp_plot(automl_leader)
+```
 
 
 
