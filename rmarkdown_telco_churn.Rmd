@@ -41,7 +41,8 @@ packages <- c("tidyverse",
               "rpart.plot",
               "xgboost",
               "ROCR",
-              "pROC"
+              "pROC",
+              "GGally"
 )
 
 prepare_packages(packages)
@@ -97,7 +98,7 @@ aml <- h2o.automl(x = x,
                  validation_frame = test2,
                  training_frame = train2,
                  max_runtime_secs = 60,
-                 exclude_algos = c("DeepLearning", "GLM"))
+                 exclude_algos = c("DeepLearning", "GLM", "DRF", "StackedEnsemble"))
 ```
 
 Extraer los mejores modelos del train.
@@ -119,6 +120,104 @@ Variables más determinantes
 ```{r}
 h2o.varimp_plot(automl_leader)
 ```
+
+
+Las variables más determinantes teniendo en cuenta el mejor algoritmo seleccionado por AutoML son:
+Contract: como variable más determinantes sería la duración del contrato.
+TechSupport: la segunda más determinante si el cliente tiene soporte técnico.
+Tenure: Es la tercera más determinante, cuanto tiempo lleva siendo cliente de la compañia.
+
+## EDA
+
+Ahora se va a analizar el dataset y sus variables. Con ello tratar de describir el dataset y obtener la mayor cantidad de información relevante para luego poder montar el modelo de predicción de abandono.
+
+Primero se va a ver que porcentaje del dataset da positivo en abandono:
+```{r}
+options(repr.plot.width = 6, repr.plot.height = 4)
+dataset %>% 
+group_by(Churn) %>% 
+summarise(Count = n())%>% 
+mutate(percent = prop.table(Count)*100)%>%
+ggplot(aes(reorder(Churn, -percent), percent), fill = Churn)+
+geom_col(fill = c("#FF0800", "#170CEA"))+
+geom_text(aes(label = sprintf("%.2f%%", percent)), hjust = 0.01,vjust = -0.5, size =3)+ 
+theme_bw()+  
+xlab("Churn") + 
+ylab("Percent")+
+ggtitle("Churn Percent")
+```
+
+Se puede observar que del dataset algo más de un 25% da positivo en abandono. Es una muestra bastante bien balanceada para lo que suele ser este tipo de casos, por lo que inicialmente podria ser viable descartar hacer down o up sampling.
+
+Ahora vamos a ver como se distribuye la variable de Churn en el resto de variables categoricas:
+
+```{r}
+options(repr.plot.width = 12, repr.plot.height = 100)
+plot_grid(ggplot(dataset, aes(x=gender,fill=Churn)) + geom_bar() + scale_fill_manual(values=c("#FF0800", "#170CEA")), 
+          ggplot(dataset, aes(x=SeniorCitizen,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=Partner,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=Dependents,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=PhoneService,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=MultipleLines,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+            
+            ggplot(dataset, aes(x=InternetService,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=OnlineSecurity,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=OnlineBackup,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=DeviceProtection,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=TechSupport,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+            
+            ggplot(dataset, aes(x=StreamingTV,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=Contract,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=PaperlessBilling,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA")),
+          ggplot(dataset, aes(x=PaymentMethod,fill=Churn))+ geom_bar(position = 'fill') + scale_fill_manual(values=c("#FF0800", "#170CEA"))
+            
+            + theme_bw()+
+          scale_x_discrete(labels = function(x) str_wrap(x, width = 10)),
+          align = 'v', ncol=2)
+
+```
+
+
+Se va a tratar de analizar del mismo modo, el comportamiento de las variables continuas con respecto la variable de abandono, Churn:
+
+```{r}
+dataset %>% ggplot(aes(x=TotalCharges,fill=Churn))+ geom_density(alpha=0.8)+scale_fill_manual(values=c("#FF0800", "#170CEA"))+labs(title='Total Charges desnisty split churn vs non churn' )
+```
+
+
+Como se puede comprobar con este gráfico podemos observar que los usuarios cuanto menos tienen acumulado de pago más tienden al abandono.
+
+
+```{r}
+dataset %>% ggplot(aes(x=MonthlyCharges,fill=Churn))+ geom_density(alpha=0.8)+scale_fill_manual(values=c("#FF0800", "#170CEA"))+labs(title='Monthly Charges desnisty split churn vs non churn' )
+```
+
+En cambio en el siguiente gráfico se puede observar que los que menos pagan mensualmente tienen a permanecer en la compañia mientras que los que más pagan tienen al abandono.
+
+
+```{r}
+dataset %>% ggplot(aes(x=tenure,fill=Churn))+ geom_density(alpha=0.8)+scale_fill_manual(values=c("#FF0800", "#170CEA"))+labs(title='Tenure desnisty split churn vs non churn' )
+```
+
+Con el gráfico que puede observarse arriba se ve la relación entre el tiempo que lleva el usuario en la compañia y el abandono. Donde hay una tendencia clara a cuanto menos tiempo lleven en la compañia más abandono hay. Mientras que a medida que van avanzando en el tiempo de estancia en la compañia la tendencia del abandono tiende a menos.
+
+
+```{r}
+# Distinguir las variables numericas
+var_class <- sapply(dataset, class)
+var_class_numeric <- names(dataset[var_class=="numeric"])
+var_class_inter <- names(dataset[var_class=="integer"])
+var_num_total <- c(var_class_numeric, var_class_inter)
+var_numeric <- dataset[var_num_total]
+var_num_total
+
+ggpairs(var_numeric, title = "Distribución de las variables continuas")
+```
+
+
+
+
+
 
 
 
