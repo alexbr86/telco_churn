@@ -53,6 +53,11 @@ prepare_packages(packages)
 
 ```{r}
 dataset <- read.csv("C:/Users/Alex/Desktop/Master&Bootcamp/Master/Modulo5/Trabajo individual/telco-customer-churn/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+var_class <- sapply(dataset, class)
+var_class_numeric <- names(dataset[var_class=="numeric"])
+var_class_inter <- names(dataset[var_class=="integer"])
+var_num_total <- c(var_class_numeric, var_class_inter)
+var_numeric <- dataset[var_num_total]
 ```
 
 Se va a analizar el tipo de información que contiene el dataset
@@ -61,11 +66,38 @@ Se va a analizar el tipo de información que contiene el dataset
 glimpse(dataset)
 ```
 
+
 Se va a cambiar los valores de la variable Senior Citizens valores categoricos de 'Yes', 'No'. Homogeneizando con el resto de variables categoricas.
 
 ```{r}
 dataset$SeniorCitizen <- as.factor(ifelse(dataset$SeniorCitizen==1, 'Yes', 'No'))
+dataset$Churn <- as.numeric(ifelse(dataset$Churn=='Yes', 1, 0))
 ```
+
+```{r}
+summary(dataset)
+```
+
+Tras ver el resumen, puede observarse que la variable TotalCharges tiene 11 NAs que habría que limipiar.Antes de ver que solución se le imputa al problema, es conveniente analizar el porqué son NAs, si es un fallo o hay algún motivo en los datos.
+
+```{r}
+dataset[is.na(dataset$TotalCharges),]
+```
+
+Tras analizar los 11 casos de NAs se ha observado que esto es debido a que son clientes recientes y no llevan aún ni un cargo acumulado, ya que como se ve en la columna Tenure llevan 0 meses en la compañia. Por lo que la mejor solución a este problema sería imputarles a todos un valor de 0. Primero se va a comprobar si hay más clientes que lleven 0 meses en la compañia y si tengan valor en TotalCharges
+
+```{r}
+dataset[dataset$tenure==0,]
+```
+
+Se comprueba que todos aquellos que llevan 0 meses son solo aquellos que tienen valores NA en TotalCharges. Por lo que se les va a asignar o como valor de pago acumulado en total.
+
+```{r}
+#Asignar valor 0 a todos aquellos que sean NA en TotalCharges
+dataset[dataset$T==0, "TotalCharges"]=0
+
+```
+
 
 ## AutoML
 Utilizando la libreria de H2O se va a probar como se comporta el dataset en limpio con un modelo y asi poder intuir de que modo proceder con el mismo.
@@ -203,21 +235,51 @@ Con el gráfico que puede observarse arriba se ve la relación entre el tiempo q
 
 
 ```{r}
-# Distinguir las variables numericas
-var_class <- sapply(dataset, class)
-var_class_numeric <- names(dataset[var_class=="numeric"])
-var_class_inter <- names(dataset[var_class=="integer"])
-var_num_total <- c(var_class_numeric, var_class_inter)
-var_numeric <- dataset[var_num_total]
-var_num_total
 
-ggpairs(var_numeric, title = "Distribución de las variables continuas")
+gpairs(var_numeric, title = "Distribución de las variables continuas")
 ```
 
 
 
+Tras observar posibles correlaciones entre las variables continuas, se ve necesario ver la matriz de correlaciones para poder definir las posibles dependencias que se empiezan a observar en el gráfico de distribución de las variables continuas.
+
+```{r}
+corr <- cor(var_numeric,  method = "pearson", use = "complete.obs")
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+   lab = TRUE)
+```
 
 
+Tras analizar la matriz de correlaciones, puede observarse una alta dependencia positiva de la variable TotalCharges con Tenure y una algo más moderada con la otra variable MonthlyCharges.
+
+
+
+#### Information value:
+
+
+```{r}
+iv_ds <- create_infotables(data=dataset,
+                           y="Churn")
+
+iv_summary <- iv_ds$Summary
+iv_summary <- iv_summary[order(iv_summary$IV), ]
+iv_summary$Variable <- factor(iv_summary$Variable, levels=iv_summary$Variable)
+
+ggplot(iv_summary, aes(x=Variable, y=IV, fill = IV))+
+  coord_flip() +
+  scale_fill_gradient(low = "grey", high = "green") +
+  geom_bar(stat = "identity")
+
+```
+  
+
+WOE segun la  Contract:
+
+```{r}
+ggplot(iv_ds$Tables$Contract, aes(x=Contract, y=WOE, fill = WOE))+
+  scale_fill_gradient(low = "red", high = "green") +
+  geom_bar(stat = "identity")
+```
 
 
 
