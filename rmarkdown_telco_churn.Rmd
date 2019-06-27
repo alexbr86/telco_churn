@@ -42,7 +42,8 @@ packages <- c("tidyverse",
               "xgboost",
               "ROCR",
               "pROC",
-              "GGally"
+              "GGally",
+              "fastDummies"
 )
 
 prepare_packages(packages)
@@ -53,11 +54,7 @@ prepare_packages(packages)
 
 ```{r}
 dataset <- read.csv("C:/Users/Alex/Desktop/Master&Bootcamp/Master/Modulo5/Trabajo individual/telco-customer-churn/WA_Fn-UseC_-Telco-Customer-Churn.csv")
-var_class <- sapply(dataset, class)
-var_class_numeric <- names(dataset[var_class=="numeric"])
-var_class_inter <- names(dataset[var_class=="integer"])
-var_num_total <- c(var_class_numeric, var_class_inter)
-var_numeric <- dataset[var_num_total]
+
 ```
 
 Se va a analizar el tipo de información que contiene el dataset
@@ -71,7 +68,6 @@ Se va a cambiar los valores de la variable Senior Citizens valores categoricos d
 
 ```{r}
 dataset$SeniorCitizen <- as.factor(ifelse(dataset$SeniorCitizen==1, 'Yes', 'No'))
-dataset$Churn <- as.numeric(ifelse(dataset$Churn=='Yes', 1, 0))
 ```
 
 ```{r}
@@ -94,7 +90,14 @@ Se comprueba que todos aquellos que llevan 0 meses son solo aquellos que tienen 
 
 ```{r}
 #Asignar valor 0 a todos aquellos que sean NA en TotalCharges
-dataset[dataset$T==0, "TotalCharges"]=0
+dataset[dataset$tenure==0, "TotalCharges"]=0
+var_class <- sapply(dataset, class)
+var_class_numeric <- names(dataset[var_class=="numeric"])
+var_class_inter <- names(dataset[var_class=="integer"])
+var_num_total <- c(var_class_numeric, var_class_inter)
+var_numeric <- dataset[var_num_total]
+
+
 
 ```
 
@@ -236,7 +239,7 @@ Con el gráfico que puede observarse arriba se ve la relación entre el tiempo q
 
 ```{r}
 
-gpairs(var_numeric, title = "Distribución de las variables continuas")
+ggpairs(var_numeric, title = "Distribución de las variables continuas")
 ```
 
 
@@ -258,6 +261,7 @@ Tras analizar la matriz de correlaciones, puede observarse una alta dependencia 
 
 
 ```{r}
+dataset$Churn <- as.numeric(ifelse(dataset$Churn=='Yes', 1, 0))
 iv_ds <- create_infotables(data=dataset,
                            y="Churn")
 
@@ -281,6 +285,60 @@ ggplot(iv_ds$Tables$Contract, aes(x=Contract, y=WOE, fill = WOE))+
   geom_bar(stat = "identity")
 ```
 
+```{r}
+ggplot(iv_ds$Tables$tenure, aes(x=tenure, y=WOE, fill = WOE))+
+  scale_fill_gradient(low = "red", high = "green") +
+  geom_bar(stat = "identity")
+```
+
+```{r}
+ggplot(iv_ds$Tables$OnlineSecurity, aes(x=OnlineSecurity, y=WOE, fill = WOE))+
+  scale_fill_gradient(low = "red", high = "green") +
+  geom_bar(stat = "identity")
+```
+
+
+## Modelado de los algoritmos
+
+#### Preprocesamiento
+
+Primeramente va a pasarse a variables dummies las categoricas para poder trabajar con ellas en los modelos.
+
+```{r}
+
+data_model <- dataset[,!names(dataset) %in% c("customerID")]
+var_categoric <- names(data_model[,!names(data_model) %in% c(var_num_total, "Churn")])
+data_model_dummy <- dummy_cols(data_model, select_columns = var_categoric, remove_first_dummy = TRUE)
+data_model_dummy_only <- data_model_dummy[,!names(data_model_dummy) %in% var_categoric]                 
+
+
+```
+
+#### Dividir entre entrenamiento y test
+
+```{r}
+train <- createDataPartition(data_model_dummy_only$Churn, p = 0.75, list = F)
+data_train <- data_model_dummy_only[train,]
+data_test <- data_model_dummy_only[-train,]
+dim(data_train)
+dim(data_test)
+```
+
+
+
+#### Adaboost
+
+```{r}
+set.seed(825)
+# Define train control for k fold cross validation
+train_control <- trainControl(method="cv", number=10)
+# Fit model
+model <- train(Churn~., data=data_train, trControl=train_control, method="adaboost")
+# Summarise Results
+print(model)
+```
+
+#### Random Forest
 
 
 
