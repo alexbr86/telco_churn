@@ -336,12 +336,43 @@ ggplot(iv_ds$Tables$OnlineSecurity, aes(x=OnlineSecurity, y=WOE, fill = WOE))+
 
 #### Preprocesamiento
 
-Primeramente va a pasarse a variables dummies las categoricas para poder trabajar con ellas en los modelos.
+Se ha visto que algunas variables categoricas dan la misma información en valores diferentes, como:  'No' y 'No Internet Service' o 'No Phone Service' y "NO". Por lo tanto se van a reducir para no tener variables con la misma información en dos variables, cuando se pasen a dummies.
+```{r}
+dataset <- data.frame(lapply(dataset, function(x) {
+                  gsub("No internet service", "No", x)}))
 
+dataset <- data.frame(lapply(dataset, function(x) {
+                  gsub("No phone service", "No", x)}))
+```
+
+En cuanto a las variables continuas, primero se va a confirmar y estandarizar que todas son numéricas.
+
+```{r}
+num_columns <- c("tenure", "MonthlyCharges", "TotalCharges")
+dataset[num_columns] <- sapply(dataset[num_columns], as.numeric)
+
+```
+
+La variable tenure da la información en meses por lo que no es un valor comparable con el resto de continuas y quizás de problemas. Por lo que para poder conseguir un modelo mas eficiente, se va a agregar los meses en franjas de años y categorizarla en factor. De este modo a la hora de leer la variable también será mucho más sencilla de entender.
+```{r}
+dataset <- mutate(dataset, tenure_bin = tenure)
+
+dataset$tenure_bin[dataset$tenure_bin >=0 & dataset$tenure_bin <= 12] <- '0-1 year'
+dataset$tenure_bin[dataset$tenure_bin > 12 & dataset$tenure_bin <= 24] <- '1-2 years'
+dataset$tenure_bin[dataset$tenure_bin > 24 & dataset$tenure_bin <= 36] <- '2-3 years'
+dataset$tenure_bin[dataset$tenure_bin > 36 & dataset$tenure_bin <= 48] <- '3-4 years'
+dataset$tenure_bin[dataset$tenure_bin > 48 & dataset$tenure_bin <= 60] <- '4-5 years'
+dataset$tenure_bin[dataset$tenure_bin > 60 & dataset$tenure_bin <= 72] <- '5-6 years'
+
+dataset$tenure_bin <- as.factor(dataset$tenure_bin)
+```
+
+
+Pasar las variables categoricas a dummies para poder trabajar con ellas en los modelos.
 ```{r}
 dataset_churn_factor <- dataset
 dataset_churn_factor$Churn <- as.factor(ifelse(dataset_churn_factor$Churn=='Yes', 1, 0)) 
-data_model <- dataset[,!names(dataset) %in% c("customerID")]
+data_model <- dataset_churn_factor[,!names(dataset_churn_factor) %in% c("customerID")]
 var_categoric <- names(data_model[,!names(data_model) %in% c(var_num_total, "Churn")])
 data_model_dummy <- dummy_cols(data_model, select_columns = var_categoric, remove_first_dummy = TRUE)
 data_model_dummy_only <- data_model_dummy[,!names(data_model_dummy) %in% var_categoric]                 
@@ -370,6 +401,7 @@ model <- train(Churn~., data=data_train, trControl=train_control, method="glm")
 # Summarise Results
 print(model)
 ```
+
 
 
 
