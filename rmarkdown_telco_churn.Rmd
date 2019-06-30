@@ -520,7 +520,7 @@ model_glm_train <- train(Churn~., data=data_train, trControl=train_control, meth
 print(model_glm_train)
 ```
 
-Una vez entrenado y viendo que el accuracy, 0.76, en entrenamiento es menor del resultado de H2O de AutoML, se va a comprobar su eficiencia predictora y a hacer la matriz de confusión.
+Una vez entrenado y viendo que el accuracy en entrenamiento es menor del resultado de H2O de AutoML, se va a comprobar su eficiencia predictora y a hacer la matriz de confusión.
 
 ```{r}
 model_glm_predict <- predict(model_glm_train, data_test)
@@ -528,7 +528,7 @@ confusionMatrix(model_glm_predict, data_test$Churn, positive = "1")
 ```
 
 
-Por lo tanto este algoritmo tiene un auc de 0.75 con una sensiblidad y especificidad equilibradas con un 0.75. Detecta muy bien los verdaderos positivos en abandono aunque quizás en falsos positivos sea algo alto.
+Por lo tanto este algoritmo tiene un buen auc con una sensiblidad y especificidad buenas y equilibradas. Detecta bastante bien los verdaderos positivos en abandono y los falsos negativos.
 
 #### GBM
 
@@ -545,14 +545,14 @@ model_gbm_train <- train(Churn~., data=data_train, trControl=train_control, meth
 print(model_gbm_train)
 ```
 
-En este caso la mejor configuración del set de entrenamiento para el modelo de GLM es con una profundidad de 3 y 100 arboles. Esto lleva a un auc de 0.786, sigue siendo menor al que ha salido con H2o de 0.84. Ahora va a procederse a predecir con el test y ver la matriz de confusión que tal se comporta.
+En este se indica la mejor configuración del set de entrenamiento para el modelo de GBM. Esto lleva a un auc que sigue siendo menor al que ha salido con H2o. Ahora va a procederse a predecir con el test y ver la matriz de confusión que tal se comporta.
 
 ```{r}
 model_gbm_predict <- predict(model_gbm_train,data_test)
 confusionMatrix(model_gbm_predict,data_test$Churn, positive = "1")
 ```
 
-Este modelo da un auc algo mas alto, de 0.77 aunque la sensibilidad es algo más baja ya que hay más falsos negativos que en el anterior modelo. Como se ha comentado, aunque la idea es optimizar todos los indicadores, prima el poder detectar todos los que realmente son positivos.
+Este modelo da un auc algo mas alto, aunque la sensibilidad es algo más baja ya que hay más falsos negativos que en el anterior modelo. Como se ha comentado, aunque la idea es optimizar todos los indicadores, prima el poder detectar todos los que realmente son positivos.
 
 #### XGBoost
 
@@ -567,14 +567,14 @@ model_xgb_train <- train(Churn~., data=data_train, trControl=train_control, meth
 print(model_xgb_train)
 ```
 
-Tras entrenar el modelo con XGBoost se encuentra una combinación de parametros donde como resultante el auc da 0.79 aún menor que el resultado de H20. Se va a proceder a predecir y ver la matriz de confusión para ver como se comporta el modelo.
+Tras entrenar el modelo con XGBoost se encuentra una combinación de parametros donde como resultante el auc aún menor que el resultado de H20. Se va a proceder a predecir y ver la matriz de confusión para ver como se comporta el modelo.
 
 ```{r}
 model_xgb_predict <- predict(model_xgb_train,data_test)
 confusionMatrix(model_xgb_predict,data_test$Churn, positive = "1")
 ```
 
-Este algoritmo finalmente tiene un auc de 0.77 aunque tiene una sensibilidad aún peor que el anterior algoritmo ya que como puede observaser en la matriz de confusión los falsos negativos son más altos aún que en los anteriores casos.
+Este algoritmo finalmente tiene un auc similar al anterior aunque tiene una sensibilidad peor, ya que como puede observase en la matriz de confusión los falsos negativos son más altos aún que en los anteriores casos.
 
 
 #### Random Forest
@@ -589,14 +589,14 @@ model_rf_train <- train(Churn~., data=data_train, trControl=train_control, metho
 print(model_rf_train)
 ```
 
-Tras el entrenamiento el algoritmo de Random Forest da un auc de 0.784 aún inferior al resultado obtenido en H2O. Se a a ver que tal se comporta prediciendo con la parte del test y viendo la matriz de confusión.
+Tras el entrenamiento el algoritmo de Random Forest da un auc aún inferior al resultado obtenido en H2O. Se a a ver que tal se comporta prediciendo con la parte del test y viendo la matriz de confusión.
 
 ```{r}
 model_rf_predict <- predict(model_rf_train,data_test)
 confusionMatrix(model_rf_predict,data_test$Churn, positive = "1")
 ```
 
-Este modelo tiene un auc de 0.774 que junto con otros es de los más altos hasta ahora. No obstante aunque es el segundo algoritmo en verdaderos positivos (detectar la gente que va a abandonar), tiene una sensibilidad algo baja con respecto a algún otro modelo, lo que hace que este más alto los falsos negativos (gente que realmente abandona la compañia pero que el algoritmo predice que no van a abandonar).
+Este modelo tiene un auc de los más altos hasta ahora. No obstante aunque es el segundo algoritmo en verdaderos positivos (detectar la gente que va a abandonar), tiene una sensibilidad algo baja con respecto a algún otro modelo, lo que hace que este más alto los falsos negativos (gente que realmente abandona la compañia pero que el algoritmo predice que no van a abandonar).
 
 
 #### GLMNET
@@ -611,14 +611,14 @@ model_glmnet_train <- train(Churn~., data=data_train, trControl=train_control, m
 print(model_glmnet_train)
 ```
 
-Tras ver que el modelo de GLMNET con el set de entrenamiento da un auc de 0.764 tampoco supera el modelo de H20 con las parametrizaciones optimizadas, se va a comprobar como se comporta prediciendo y en la matriz de confusión.
+Tras ver que el modelo de GLMNET con el set de entrenamiento da que tampoco supera el modelo de H20 con las parametrizaciones optimizadas, se va a comprobar como se comporta prediciendo y en la matriz de confusión.
 
 ```{r}
 model_glmnet_predict <- predict(model_glmnet_train,data_test)
 confusionMatrix(model_glmnet_predict,data_test$Churn, positive = "1")
 ```
 
-Este modelo tiene un auc de 0.76 con una sensibilidad del 0.766 la más alta hasta ahora y con una especificidad de 0.759. Es el algoritmo con mayor acierto en verdaderos positivos y el que menos tiene en falsos negativos. Ademas de que sus falsos positivos están bastante equilibrados frente al resto.
+Este modelo tiene un auc algo por debajo de algunos pero con una sensibilidad mayor y una especificidad no tan alta como otros. Aún así no es el algoritmo con la sensibilidad, especificidad y auc más equilibradas pero no por mucho. Es el segundo algoritmo con mayor acierto en verdaderos positivos y que menos tiene en falsos negativos. 
 
 
 #### Conclusiones del modelado
@@ -630,19 +630,19 @@ Después de varias pruebas de concepto:
 + usando el paquete caret que prueba con diferentes hiperparamtros en el entrenamiento para cada algoritmo y les asigna la mejor combinación de ellos, 
 + probar con varios algoritmos, confunciones de cross validation,
 
-Tras todas estas pruebas, se ha mostrado la mejor solución o elección en cada caso. Una vez analizado cada algoritmo para las mejores soluciones o elecciones planteadas se ha observado que el algoritmo que mejor se adapta a la casuistica con los resultados y metricas ofrecidos es GLMNET. 
+Tras todas estas pruebas, se ha mostrado la mejor solución o elección en cada caso. Una vez analizado cada algoritmo para las mejores soluciones o elecciones planteadas se ha observado que el algoritmo que mejor se adapta a la casuistica con los resultados y metricas ofrecidos es GLM. 
 
-Con este algotimo se ha logrado un auc de 76% con una sensibilidad del 76.6% y una especificidad del 75.9%. Estos datos en general no son malos, es un buen comienzo de modelado. Aún así no supera el auc y la especificidad (84% y 90%) del de H2O que era un GBM. Pero como se mencionaba antes, la sensibilidad o ser capaz de acertar el mayor numero de abandonos sin errar en exceso en los falsos negativos es bastante importante. Ya que de cara a negocio es mucho mejor detectar realmente quienes se van que fallar alguno diciendo que se va y luego no. Y en ese caso este algorito de GLMNET es mejor que el de H2O (76.6% frente a 59%) que sus metricas son altas por acertar quienes no se van.
+Con este algotimo se ha logrado un auc de 76% con una sensibilidad del 71% y una especificidad del 78%. Estos datos en general no son malos, es un buen comienzo de modelado. Aún así no supera el auc y la especificidad (84% y 90%) del de H2O que era un GBM. Pero como se mencionaba antes, la sensibilidad o ser capaz de acertar el mayor numero de abandonos sin errar en exceso en los falsos negativos es bastante importante. Ya que de cara a negocio es mucho mejor detectar realmente quienes se van, que fallar alguno diciendo que se va y luego no. Y en ese caso este algorito de GLM es mejor que el de H2O (71% frente a 59%) que sus metricas son altas por acertar quienes no se van.
 
-Por tanto puede entenderse que en ciertos aspectos de eficiencia, el algoritmo de GLMNET es mejor que el de H2O (GBM) y  por consiguiente lo supera.
+Por tanto puede entenderse que en ciertos aspectos de eficiencia, el algoritmo de GLM es mejor que el de H2O (GBM) y por consiguiente lo supera.
 
 Las variables más importantes de este algoritmo han sido:
 
 ```{r}
-plot(varImp(model_glmnet_train))
+plot(varImp(model_glm_train))
 ```
 
-Como puede verse en el gráfico hay variables dummies por lo que habría que valorar tanto la variable en si como en los valores que se fija y en los ausentes. Como se puede ver la variable más importante es la de que tipo de contrato, el servicio de internert y el tipo de pago. Como se ha visto antes en el EDA variables cuales tenian una tendencia según el valor que tuvieran, por lo que viendo el gráfico pueden confirmarse las hipotesis que se lanzaban al inicio y las conclusiones plateadas tras el EDA.
+Como puede verse en el gráfico hay variables dummies por lo que habría que valorar tanto la variable en si como en los valores que se fija y en los ausentes. Como se puede ver la variable más importante es la de que tipo de contrato, el servicio de internert y el tiempo de estancia en la compañia. Variables que en el EDA ya se veian con una tendencia significativa. Lo que por lo tanto, viendo el gráfico se confirma las hipotesis que se lanzaban al inicio y las conclusiones plateadas tras el EDA.
 
 
 ## Conslusiones
@@ -657,7 +657,7 @@ Por lo que se propondría a negocio como solución inicial estudiar la posibilid
 
 Todo ello teniendo en cuenta que el porcentaje a retener el de mas de un 26% de la clientela y que son muchos de ellos los que mensualmente una cuota más alta dejan en la compañia.
 
-En cuanto al modelado para detectarlos, se ha llegado a un primer modelo final con una capacidad de detección del 76% de la cual aciertan quíen se va en un 76,6%. Es un buen comienzo que habría que seguir mejorando, investigando otras técnicas de feature engineering, probando con otros modelos e hiperparametros, quizás cambiando el modelo de predición de 0 o 1 a una probabilidad de ser 1 y por supuesto entrenando los algoritmos con nuevos datos.
+En cuanto al modelado para detectarlos, se ha llegado a un primer modelo final con una capacidad de detección del 76% de la cual aciertan quíen se va en un 71%. Es un buen comienzo que habría que seguir mejorando, investigando otras técnicas de feature engineering, probando con otros modelos e hiperparametros, quizás cambiando el modelo de predición de 0 o 1 a una probabilidad de ser 1 y por supuesto entrenando los algoritmos con nuevos datos.
 
 
 
