@@ -1,6 +1,6 @@
 ---
-title: "telco_churn"
-author: "135430"
+title: "Churn Prediction"
+author: "Author: 135430"
 output: html_document
 ---
 
@@ -56,7 +56,7 @@ prepare_packages(packages)
 #### Cargar el dataset
 
 ```{r}
-dataset <- read.csv("C:/Users/Alex/Desktop/Master&Bootcamp/Master/Modulo5/Trabajo individual/telco-customer-churn/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+dataset <- read.csv("dataset/WA_Fn-UseC_-Telco-Customer-Churn.csv")
 ```
 
 
@@ -244,6 +244,7 @@ plot_grid(ggplot(dataset, aes(x=StreamingTV,fill=Churn))+ geom_bar(position = 'f
           scale_x_discrete(labels = function(x) str_wrap(x, width = 10)),
           align = 'v', ncol=2)
 ```
+
 En estas últimas variables hay una tendencia en los valores de cada variable según la variable objetivo Churn:
 
 + StreamingTV, si el cliente servicio de TV Streamng, hay una ligera tendencia al abandono entre los clientes que tienen el servicio de TV Streaming y entiendiendo que se les puede sumar aquellos que no tienen servicio de internet ya que no disponen del servicio.
@@ -260,6 +261,7 @@ Disposicion de la variable TotalCharges contra la variable objetivo:
 ```{r}
 dataset %>% ggplot(aes(x=TotalCharges,fill=Churn))+ geom_density(alpha=0.8)+scale_fill_manual(values=c("#FF0800", "#170CEA"))+labs(title='Total Charges desnisty split churn vs non churn' )
 ```
+
 Como se puede comprobar con este gráfico podemos observar que los usuarios cuanto menos tienen acumulado de pago más tienden al abandono.
 
 
@@ -270,13 +272,16 @@ ggplot(dataset, aes(y=TotalCharges, x=" ", fill=Churn))+
   geom_boxplot()+
   theme_bw()
 ```
+
 Se puede confirmar lo visto en el gráfico anterior donde se ve una diferencia clara entre los segundos quartiles o medias de los que si y no abandonan. Viendo que hay una tendencia al abandono en aquellos que llevan menos cargos acumulados. Aunque puede verse algunos outliers, no tiene mucho aspecto de serlo, más bien pueden ser usuarios que lleven mucho tiempo ya en la compañia con cargos acumulados y que tiendan a hacer un cambio.
 
 
 Disposicion de la variable MonthlyCharges contra la variable objetivo:
+
 ```{r}
 dataset %>% ggplot(aes(x=MonthlyCharges,fill=Churn))+ geom_density(alpha=0.8)+scale_fill_manual(values=c("#FF0800", "#170CEA"))+labs(title='Monthly Charges desnisty split churn vs non churn' )
 ```
+
 En cambio en el siguiente gráfico se puede observar que los que menos pagan mensualmente tienen a permanecer en la compañia mientras que los que más pagan tienen al abandono.
 
 Boxplot de la variable MonthlyCharges sobre la objetivo Churn.
@@ -288,6 +293,7 @@ ggplot(dataset, aes(y=MonthlyCharges, x=" ", fill=Churn))+
   geom_boxplot()+
   theme_bw()
 ```
+
 Se ve una distrubución con valores altos más compactos en los que tienen tendencia al abandono contra los que no tienen, que es una distibución donde el primer quartil tiene un valor mucho más bajo y el segundo esta más parejo. Esto puede entenderse como que los que tienen tendencia al abandono tienen unos cargos mensuales altos frente a los que no lo tienen que esta algo más distribuido aunque con unos valores más bajos.
 
 
@@ -297,6 +303,7 @@ Distribución de la variable tenure:
 dataset %>% ggplot(aes(x=tenure,fill=Churn))+ geom_density(alpha=0.8)+scale_fill_manual(values=c("#FF0800", "#170CEA"))+labs(title='Tenure desnisty split churn vs non churn' )
 
 ```
+
 Con el gráfico que puede observarse arriba se ve la relación entre el tiempo que lleva el usuario en la compañia y el abandono. Donde hay una tendencia clara a cuanto menos tiempo lleven en la compañia más abandono hay. Mientras que a medida que van avanzando en el tiempo de estancia en la compañia la tendencia del abandono tiende a menos.
 
 Boxplot de la variable Tenure sobre la objetivo Churn.
@@ -308,14 +315,15 @@ ggplot(dataset, aes(y=tenure, x=" ", fill=Churn))+
   geom_boxplot()+
   theme_bw()
 ```
+
 Se ve una diferencia bastante notable entre los usuarios que tienen más tendencia al abandono con los que no. Puede deducirse que los usuarios con mayor tendencia al abandono tienen unos valores de tenure bastante más bajos ya que el segundo quartil de los de no abandono esta en 40 meses frente a los que si con 10 meses. Esto confirma lo visto en la anterior gráfica donde se intuia que los usuarios con mayor tendencia al abandono son los que menos tiempo llevan en la compañia.
 
 
 Distribución de las variables en scatterplot onde se va a observar alguna dependencia o correlación entre ellas y detección de outliers.
+
 ```{r}
 ggpairs(var_numeric, title = "Distribución de las variables continuas")
 ```
-
 
 
 Tras observar posibles correlaciones entre las variables continuas, se ve necesario ver la matriz de correlaciones para poder definir las posibles dependencias que se empiezan a observar en el gráfico de distribución de las variables continuas.
@@ -326,9 +334,7 @@ ggcorrplot(corr, hc.order = TRUE, type = "lower",
    lab = TRUE)
 ```
 
-
 Tras analizar la matriz de correlaciones, puede observarse una alta dependencia positiva de la variable TotalCharges con Tenure y una algo más moderada con la otra variable MonthlyCharges.
-
 
 
 #### Information value:
@@ -349,7 +355,6 @@ ggplot(iv_summary, aes(x=Variable, y=IV, fill = IV))+
 ```
 
 
-  
 Ahora a verse el indicador de WOE para las tres principales variables vistas en los datos del information value.
 WOE segun la  Contract:
 
@@ -358,8 +363,8 @@ ggplot(iv_ds$Tables$Contract, aes(x=Contract, y=WOE, fill = WOE))+
   scale_fill_gradient(low = "red", high = "green") +
   geom_bar(stat = "identity")
 ```
-Se empieza a confirmar lo visto anteriormente con una disposición al abandono aquellos que tienen un tipo de contrato de mes a mes frente al resto.
 
+Se empieza a confirmar lo visto anteriormente con una disposición al abandono aquellos que tienen un tipo de contrato de mes a mes frente al resto.
 
 WOE según tenure:
 
@@ -368,6 +373,7 @@ ggplot(iv_ds$Tables$tenure, aes(x=tenure, y=WOE, fill = WOE))+
   scale_fill_gradient(low = "red", high = "green") +
   geom_bar(stat = "identity")
 ```
+
 Aquí también se confirma lo visto anteriormente que hay una tendencia importante al abandono en aquellos que llevan menos menos tiempo en la compañia.
 
 
@@ -376,11 +382,15 @@ ggplot(iv_ds$Tables$OnlineSecurity, aes(x=OnlineSecurity, y=WOE, fill = WOE))+
   scale_fill_gradient(low = "red", high = "green") +
   geom_bar(stat = "identity")
 ```
+
 En si los usuarios tienen servicio de seguridad online, se confirma una tendencia al abandono entre aquellos que no disponen de ese servicio.
 
 #### Conclusiones EDA
+
 Tras analizar todas y cada una de las variables y sus ditribuciones ya se ve un perfil claro el cual tiene la tendencia al abandono donde toman parte con más fuerza unas variables frente a otras. 
+
 Es un cliente que como bien se ve con las variables tenure, contract o totalcharges, lleva poco tiempo en la compañia lo cual tiene un cargo acumulado menor, tiene un contrato que se renueva mes a mes y lo que esto implica también un cargo mensual más alto. 
+
 Además se ve que sus condiciones son bastante básicas ya que tiende a carecer de servicios adicionales como el de OnlineSecurity, StreamingTV, DeviceProtection, OnlineBackup, TechSupport.
 Es un perfil de cliente que no suele tener Parners o Dependencies y que suele pagar con Electronic check.
 
@@ -441,7 +451,6 @@ invisible(gc); remove(nCores); remove(nThreads); remove(cluster);
 ```
 
 
-
 #### Featuring engineering
 
 Se ha visto que algunas variables categoricas dan la misma información en valores diferentes, como:  'No' y 'No Internet Service' o 'No Phone Service' y "NO". Por lo tanto se van a reducir para no tener variables con la misma información en dos variables, cuando se pasen a dummies.
@@ -494,6 +503,7 @@ dim(data_test)
 ```
 
 #### GLM
+
 Antes de empezar mencionar como se entiende que se debiera valorar o que métricas debieran primar a la hora de evaluar los modelos. Como lo que se trata de detectar el mayor numero de clientes que abandonen la compañia y que no se escape ninguno, hay que tener más en cuenta la sensibilidad (ya que como valor positivo se va a tratar el 1 de abandono, ya que se quiere optimizar para su detección) junto con el auc, aunque se buscará un equilibrio de todo.
 
 Por otro lado, a la hora de entrenar cada modelo, se va a hacer con el metodo de cross validation, que consiste en dividir la muestra por n y cada división hara una vez de test. Para entrenar con diferentes muestras y luego sacar un promedio de todos los resultados. De esta manera se eficienta el entrenaimiento, ya que se entrena varias veces con diferentes modelos. Además se ha decido tras algunas pruebas de concepto, que el dataset si que puede tener algo de desbalanceo, por lo que se ha seleccionado la tecnica de Oversampling, SMOTE. Este metodo selecciona dos instancias similares utilizando vecinos más cercanos y bootstrapping, y genera muestras sintéticas a partir de instancias de las clases minoritarias.
@@ -541,9 +551,8 @@ En este caso la mejor configuración del set de entrenamiento para el modelo de 
 model_gbm_predict <- predict(model_gbm_train,data_test)
 confusionMatrix(model_gbm_predict,data_test$Churn, positive = "1")
 ```
+
 Este modelo da un auc algo mas alto, de 0.77 aunque la sensibilidad es algo más baja ya que hay más falsos negativos que en el anterior modelo. Como se ha comentado, aunque la idea es optimizar todos los indicadores, prima el poder detectar todos los que realmente son positivos.
-
-
 
 #### XGBoost
 
@@ -564,6 +573,7 @@ Tras entrenar el modelo con XGBoost se encuentra una combinación de parametros 
 model_xgb_predict <- predict(model_xgb_train,data_test)
 confusionMatrix(model_xgb_predict,data_test$Churn, positive = "1")
 ```
+
 Este algoritmo finalmente tiene un auc de 0.77 aunque tiene una sensibilidad aún peor que el anterior algoritmo ya que como puede observaser en la matriz de confusión los falsos negativos son más altos aún que en los anteriores casos.
 
 
@@ -578,12 +588,14 @@ model_rf_train <- train(Churn~., data=data_train, trControl=train_control, metho
 # Imprimir resultados
 print(model_rf_train)
 ```
+
 Tras el entrenamiento el algoritmo de Random Forest da un auc de 0.784 aún inferior al resultado obtenido en H2O. Se a a ver que tal se comporta prediciendo con la parte del test y viendo la matriz de confusión.
 
 ```{r}
 model_rf_predict <- predict(model_rf_train,data_test)
 confusionMatrix(model_rf_predict,data_test$Churn, positive = "1")
 ```
+
 Este modelo tiene un auc de 0.774 que junto con otros es de los más altos hasta ahora. No obstante aunque es el segundo algoritmo en verdaderos positivos (detectar la gente que va a abandonar), tiene una sensibilidad algo baja con respecto a algún otro modelo, lo que hace que este más alto los falsos negativos (gente que realmente abandona la compañia pero que el algoritmo predice que no van a abandonar).
 
 
@@ -598,6 +610,7 @@ model_glmnet_train <- train(Churn~., data=data_train, trControl=train_control, m
 # Imprimir resultados
 print(model_glmnet_train)
 ```
+
 Tras ver que el modelo de GLMNET con el set de entrenamiento da un auc de 0.764 tampoco supera el modelo de H20 con las parametrizaciones optimizadas, se va a comprobar como se comporta prediciendo y en la matriz de confusión.
 
 ```{r}
@@ -611,6 +624,7 @@ Este modelo tiene un auc de 0.76 con una sensibilidad del 0.766 la más alta has
 #### Conclusiones del modelado
 
 Después de varias pruebas de concepto:
+
 + probando con diferentes featuring egineering (categorizar tenure, escalar de modo continua, agregar valores de "NO" y "No internet service",...) y sin ellas, 
 + probando sin y con oversampling (down y SMOTE), 
 + usando el paquete caret que prueba con diferentes hiperparamtros en el entrenamiento para cada algoritmo y les asigna la mejor combinación de ellos, 
@@ -623,6 +637,7 @@ Con este algotimo se ha logrado un auc de 76% con una sensibilidad del 76.6% y u
 Por tanto puede entenderse que en ciertos aspectos de eficiencia, el algoritmo de GLMNET es mejor que el de H2O (GBM) y  por consiguiente lo supera.
 
 Las variables más importantes de este algoritmo han sido:
+
 ```{r}
 plot(varImp(model_glmnet_train))
 ```
